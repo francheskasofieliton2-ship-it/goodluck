@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Happy 1st Anniversary Aya 💜</title>
+
+<style>
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(135deg, #8e44ad, #5dade2, #9b59b6, #2980b9);
+    background-size: 400% 400%;
+    animation: gradientBG 15s ease infinite;
+    color: white;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+@keyframes gradientBG {
+    0% {background-position: 0% 50%;}
+    50% {background-position: 100% 50%;}
+    100% {background-position: 0% 50%;}
+}
+#lock-screen {
+    background: rgba(0,0,0,0.5);
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 0 40px rgba(0,0,0,0.5);
+    width: 90%;
+    max-width: 400px;
+}
+h1 { font-family: 'Georgia', serif; font-size: 28px; margin-bottom: 20px; color: #f8c4f0; }
+#countdown, #lock-countdown { font-size: 20px; margin-bottom: 20px; color: #ffe6f7; }
+input { padding: 12px 18px; font-size: 18px; border-radius: 8px; border: none; outline: none; width: 80%; margin-top: 15px; }
+#hearts { font-size: 24px; margin-top: 15px; }
+button { margin-top: 20px; padding: 12px 25px; font-size: 20px; border: none; background: #6c5ce7; color: white; border-radius: 10px; cursor: pointer; transition: 0.3s; }
+button:hover { background: #5b2cc3; transform: scale(1.05); }
+#error { color: #ff6b81; margin-top: 10px; font-size: 16px; display: none; }
+</style>
+</head>
+<body>
+
+<div id="lock-screen">
+    <h1>💜 Happy 1st Anniversary Aya 💙</h1>
+    <div id="countdown"></div>
+    <input type="password" id="pin" placeholder="Enter PIN">
+    <button id="unlock-btn">ENTER</button>
+    <div id="hearts">Hearts left today: 3</div>
+    <div id="error">Incorrect PIN!</div>
+    <div id="lock-countdown" style="display:none;"></div>
+</div>
+
+<script>
+const unlockBtn = document.getElementById("unlock-btn");
+const pinInput = document.getElementById("pin");
+const errorDiv = document.getElementById("error");
+const heartsDiv = document.getElementById("hearts");
+const lockCountdownDiv = document.getElementById("lock-countdown");
+
+const correctPIN = "hehehemwaa";
+const maxHearts = 3;
+
+// Load hearts and lock info from localStorage
+let hearts = parseInt(localStorage.getItem("heartsLeft")) || maxHearts;
+let lockUntil = parseInt(localStorage.getItem("lockUntil")) || 0;
+
+// Update hearts display
+function updateHeartsDisplay() {
+    heartsDiv.innerHTML = `Hearts left today: ${hearts}`;
+}
+updateHeartsDisplay();
+
+// Countdown to Dec 19, 12:00 AM (visual + auto redirect)
+function updateCountdown() {
+    const now = new Date();
+    const target = new Date(now.getFullYear(), 11, 19, 0, 0, 0);
+    let diff = target - now;
+    if (diff < 0) diff = 0;
+
+    const days = Math.floor(diff / (1000*60*60*24));
+    const hours = Math.floor((diff % (1000*60*60*24))/(1000*60*60));
+    const minutes = Math.floor((diff % (1000*60*60))/(1000*60));
+    const seconds = Math.floor((diff % (1000*60))/1000);
+
+    document.getElementById("countdown").innerHTML = `Countdown: ${days}d ${hours}h ${minutes}m ${seconds}s`;
+
+    if (diff === 0) {
+        clearInterval(countdownInterval);
+        document.getElementById("countdown").innerHTML = "🎉 Automatic unlock! Redirecting... 🎉";
+        setTimeout(() => {
+            window.location.href = "page2.html"; // Redirect to page 2
+        }, 2000); // short delay for user to see message
+    }
+}
+const countdownInterval = setInterval(updateCountdown, 1000);
+updateCountdown();
+
+// 24h lock countdown
+function startLockCountdown() {
+    lockCountdownDiv.style.display = "block";
+    unlockBtn.disabled = true;
+    pinInput.disabled = true;
+
+    const interval = setInterval(() => {
+        const now = Date.now();
+        const remaining = lockUntil - now;
+        if (remaining <= 0) {
+            clearInterval(interval);
+            hearts = maxHearts;
+            localStorage.setItem("heartsLeft", hearts);
+            localStorage.removeItem("lockUntil");
+            updateHeartsDisplay();
+            unlockBtn.disabled = false;
+            pinInput.disabled = false;
+            lockCountdownDiv.style.display = "none";
+            errorDiv.style.display = "none";
+            return;
+        }
+        const hours = Math.floor(remaining / (1000*60*60));
+        const minutes = Math.floor((remaining % (1000*60*60))/(1000*60));
+        const seconds = Math.floor((remaining % (1000*60))/1000);
+        lockCountdownDiv.innerHTML = `🔒 Locked! Try again in ${hours}h ${minutes}m ${seconds}s`;
+    }, 1000);
+}
+
+// Initialize lock if needed
+if (lockUntil && lockUntil > Date.now()) {
+    startLockCountdown();
+}
+
+unlockBtn.addEventListener("click", () => {
+    if (lockUntil && lockUntil > Date.now()) return;
+
+    if (pinInput.value === correctPIN) {
+        // Redirect to page2.html immediately
+        window.location.href = "page2.html";
+    } else {
+        hearts--;
+        localStorage.setItem("heartsLeft", hearts);
+        updateHeartsDisplay();
+        errorDiv.innerHTML = "Incorrect PIN! 💔";
+        errorDiv.style.display = "block";
+        pinInput.value = "";
+
+        if (hearts <= 0) {
+            lockUntil = Date.now() + 24*60*60*1000; // 24h lock
+            localStorage.setItem("lockUntil", lockUntil);
+            startLockCountdown();
+        }
+    }
+});
+</script>
+
+</body>
+</html>
